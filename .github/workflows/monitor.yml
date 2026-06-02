@@ -1,0 +1,38 @@
+name: Steam Monitor
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias
+        run: pip install requests
+
+      - name: Correr monitor
+        env:
+          STEAM_API_KEY: ${{ secrets.STEAM_API_KEY }}
+          STEAM_ID:      ${{ secrets.STEAM_ID }}
+          NTFY_TOPIC:    ${{ secrets.NTFY_TOPIC }}
+        run: python monitor_actions.py
+
+      - name: Guardar estado en el repo
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "Steam Monitor Bot"
+          git add state.json
+          git diff --staged --quiet || git commit -m "state update" && git push
